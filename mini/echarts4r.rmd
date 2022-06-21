@@ -1,0 +1,79 @@
+---
+title: "&nbsp;" 
+output:
+  html_document:
+    self_contained: yes
+---
+
+```{=html}
+<style>
+element.style {
+  width:         1200px;
+  height:        600px;
+  margin-top:    25px;
+  margin-bottom: 25px;
+}
+</style>
+```
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      eval = TRUE, 
+                      warning = FALSE, 
+                      comment = NA, 
+                      cache = FALSE)
+```
+
+```{r}
+pacman::p_load(tidyverse)
+pacman::p_load(echarts4r)
+```
+
+```{r}
+birth_data <- readRDS('dat/birth_data.rds')
+```
+
+```{r}
+#| panel: fill
+m_data <- birth_data %>% 
+   filter(origin != "Babies") %>%
+   select(-sum) %>% 
+   pivot_wider(id_cols = c(SITENAME, DATE_FLOOR, origin),
+               names_from = name,
+               values_from = cumsum)
+
+c1 <- m_data %>%
+   group_by(SITENAME) %>% 
+   e_charts(x = DATE_FLOOR, timeline = TRUE,
+            elementId = "chart1",
+            height = '500px',
+            width  = '500px') %>% 
+   e_line(serie = `M-Consented`) %>% 
+   e_line(serie = `M-Pre-Screen Eligible`) %>% 
+   e_legend(FALSE) %>% 
+   e_title("Mothers", left = 'center') %>%
+   e_tooltip(trigger = 'axis') %>% 
+   e_datazoom(type = "slider", show = FALSE) %>% 
+   e_tooltip(trigger = 'axis') 
+
+c2 <- birth_data %>%
+   filter(origin == "Babies") %>% 
+   group_by(SITENAME) %>% 
+   e_charts(x = DATE_FLOOR, timeline = TRUE,
+            elementId = "chart2",
+            height = '500px',
+            width  = '500px') %>%  
+   e_line(serie = cumsum,
+          name = 'B-Consented') %>% 
+   e_legend(FALSE) %>% 
+   e_title("Babies", left = 'center') %>%
+   e_tooltip(trigger = 'axis') %>% 
+   e_timeline_opts(show = FALSE) %>% 
+   e_datazoom(type = "slider") %>% 
+   e_connect(c("chart1"))
+
+e_arrange(c1, c2, 
+          cols = 2, rows = 1,
+           width = '1000px',
+          height = '500px')
+```

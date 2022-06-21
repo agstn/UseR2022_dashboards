@@ -1,0 +1,463 @@
+---
+title:     "Interactive dashboards ~~Shiny~~"
+subtitle:  "useR! 2022: Session 24, Web Frameworks"
+author:    "**Agustin Calatroni**"
+institute: "![Rho](img/Rho_logo.png){width=15%}"
+date:      "Wednesday, 22 June 2022"
+format: 
+ revealjs:
+    logo: img/userlogo-small.png
+    self-contained: true
+    theme: simple
+    controls: true
+    # incremental: true
+    # scrollable: false 
+    slide-number: false
+    preview-links: true
+---
+
+### Abstract
+
+> ::: {style="line-height: normal; font-size: 28px"}
+> RStudio's [`flexdashboard`](https://pkgs.rstudio.com/flexdashboard/) package is a powerful tool to create interactive dashboards in R using R Markdown. A variety of layouts can be quickly generated including multiple pages, storyboards, and commentaries, as well as embedded tabs and drop-down menus. Additionally, with minimal programming effort, the dashboards can be customized via pre-packaged themes or custom CSS. Dashboards can be further extended for user interactivity with tables and visualizations by judicious use of HTML widgets to create a standalone HTML file with no special client or server requirement. In this talk, we will present a workflow utilizing flexdashboard and leveraging the abilities of other individual packages, such as `trelliscopejs`, `plotly`, `DT`, `reactable`, `leaflet`, `crosstalk`, to create highly interactive clinical trial reports for data monitoring and/or statistical analyses results. By avoiding the use of shiny, these reports can be conveniently emailed, deployed on an internal company webpage, or added to GitHub pages for widespread accessibility. Demonstrations of dashboards will include those listed below as well as additional examples that have been developed for current clinical trials monitoring.
+> :::
+
+<!-- <a href = 'https://github.com/agstn' target = '_blank'><i class = 'fab fa-github'></i>  </a> -->
+
+<!-- <a href = 'https://twitter.com/acalatr/' target = '_blank'><i class = 'fab fa-twitter'></i>  </a> -->
+
+<!-- <a href = 'https://www.linkedin.com/in/agustin-calatroni-41280b132/' target = '_blank'><i class = 'fab -->
+
+::: notes
+Speaker notes go here
+:::
+
+# Interactivity
+
+# [Crosstalk](https://rstudio.github.io/crosstalk/index.html) & [Plotly](https://plotly.com/r/) ![](img/hex_plotly.png)
+
+#  {background-iframe="mini/plotly.html" background-interactive="TRUE"}
+
+# 
+
+::: panel-tabset
+### Code {.scrollable .smaller}
+
+``` r
+pacman::p_load(tidyverse)
+pacman::p_load(crosstalk, plotly)
+
+birth_data <- readRDS('dat/birth_data.rds')
+birth_data_hi <- SharedData$new(birth_data %>% ungroup())
+
+filter_select(id = "id", 
+              label = "Select a site", 
+              sharedData = birth_data_hi, 
+              group = ~SITENAME,
+              multiple = FALSE)
+
+gg <- ggplot(birth_data_hi) + 
+   geom_line(aes(DATE_FLOOR, cumsum, group = SITENAME, color = name)) +
+   facet_wrap(~ origin) + 
+   scale_colour_manual(values = c('#b2df8a','#fb9a99','#fdbf6f'),
+                       guide = "none") +
+   labs(x = NULL,
+        y = 'Cumulative Data',
+        color = NULL) +
+   theme_bw(base_size = 12)+
+   theme(panel.grid.minor = element_blank(),
+         axis.ticks.y.right = element_blank(),
+         legend.position = "bottom")
+
+ggplotly(gg, 
+         dynamicTicks = TRUE,
+         width = 800,
+         height = 400,
+         tooltip = c("colour","x","y")) %>% 
+   hide_legend() %>% 
+   config(displayModeBar = F)
+```
+
+### Output
+
+```{r}
+knitr::include_app("mini/plotly.html", height = "800px")
+```
+:::
+
+# [echarts4r](https://echarts4r.john-coene.com/) ![](img/hex_echarts4r.png)
+
+#  {background-iframe="mini/echarts4r.html" background-interactive="TRUE"}
+
+# 
+
+::: panel-tabset
+### Code {.scrollable .smaller}
+
+``` r
+m_data <- birth_data %>% 
+   filter(origin != "Babies") %>%
+   select(-sum) %>% 
+   pivot_wider(id_cols = c(SITENAME, DATE_FLOOR, origin),
+               names_from = name,
+               values_from = cumsum)
+
+c1 <- m_data %>%
+   group_by(SITENAME) %>% 
+   e_charts(x = DATE_FLOOR, timeline = TRUE,
+            elementId = "chart1",
+            height = '500px',
+            width  = '500px') %>% 
+   e_line(serie = `M-Consented`) %>% 
+   e_line(serie = `M-Pre-Screen Eligible`) %>% 
+   e_legend(FALSE) %>% 
+   e_title("Mothers", left = 'center') %>%
+   e_tooltip(trigger = 'axis') %>% 
+   e_datazoom(type = "slider", show = FALSE) %>% 
+   e_tooltip(trigger = 'axis') 
+
+c2 <- birth_data %>%
+   filter(origin == "Babies") %>% 
+   group_by(SITENAME) %>% 
+   e_charts(x = DATE_FLOOR, timeline = TRUE,
+            elementId = "chart2",
+            height = '500px',
+            width  = '500px') %>%  
+   e_line(serie = cumsum,
+          name = 'B-Consented') %>% 
+   e_legend(FALSE) %>% 
+   e_title("Babies", left = 'center') %>%
+   e_tooltip(trigger = 'axis') %>% 
+   e_timeline_opts(show = FALSE) %>% 
+   e_datazoom(type = "slider") %>% 
+   e_connect(c("chart1"))
+
+e_arrange(c1, c2, 
+          cols = 2, rows = 1,
+           width = '1000px',
+          height = '500px')
+```
+
+### Output
+
+```{r}
+knitr::include_app("mini/echarts4r.html", height = "800px")
+```
+:::
+
+## Jelle Geertsma @rdatasculptor
+
+::: columns
+::: {.column width="50%"}
+<blockquote class="twitter-tweet">
+
+<p lang="en" dir="ltr">
+
+Please take a look at what we made at <a href="https://twitter.com/eelloo_nl?ref_src=twsrc%5Etfw">@eelloo_nl</a> using <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc%5Etfw">#rstats</a> {flexdashboard}, {reactable} and <a href="https://twitter.com/jdatap?ref_src=twsrc%5Etfw">@jdatap</a>'s great {echarts4r}! <a href="https://t.co/g9jJtjWj0K">https://t.co/g9jJtjWj0K</a> <a href="https://twitter.com/hashtag/flexdashboard?src=hash&amp;ref_src=twsrc%5Etfw">#flexdashboard</a> <a href="https://twitter.com/hashtag/reactable?src=hash&amp;ref_src=twsrc%5Etfw">#reactable</a> <a href="https://twitter.com/hashtag/echarts4r?src=hash&amp;ref_src=twsrc%5Etfw">#echarts4r</a> <a href="https://t.co/5PN21wag38">pic.twitter.com/5PN21wag38</a>
+
+</p>
+
+--- Jelle Geertsma (@rdatasculptor) <a href="https://twitter.com/rdatasculptor/status/1427637038577328133?ref_src=twsrc%5Etfw">August 17, 2021</a>
+
+</blockquote>
+
+```{=html}
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+```
+:::
+
+::: {.column width="50%"}
+<blockquote class="twitter-tweet">
+
+<p lang="en" dir="ltr">
+
+Goodness, the things <a href="https://twitter.com/rdatasculptor?ref_src=twsrc%5Etfw">@rdatasculptor</a> does with {echarts4r}! I didn't even know this was possible. <a href="https://t.co/Fp3uysc5e5">https://t.co/Fp3uysc5e5</a>
+
+</p>
+
+--- John Coene (@jdatap) <a href="https://twitter.com/jdatap/status/1502659214744993793?ref_src=twsrc%5Etfw">March 12, 2022</a>
+
+</blockquote>
+
+```{=html}
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+```
+:::
+:::
+
+# [trelliscopejs](https://hafen.github.io/trelliscopejs/)
+
+![](img/hex_trelliscopejs.png)
+
+```{=html}
+<script src="https://unpkg.com/trelliscopejs-lib/dist/trelliscope.min.js"></script>
+```
+#  {background-iframe="mini/trelliscope.html" background-interactive="TRUE"}
+
+# 
+
+::: panel-tabset
+### Code {.scrollable .smaller}
+
+``` r
+gg <- birth_data %>%
+   ungroup() %>% 
+   group_nest(SITENAME) %>% 
+   rowwise() %>% 
+   mutate(babies =  max(data %>% filter(name == 'B-Consented') %>% pull(cumsum) ),
+          mothers = max(data %>% filter(name == 'M-Consented') %>% pull(cumsum) ),
+          gg = list( ggplot(data) + 
+                        geom_line(aes(DATE_FLOOR, cumsum, color = name)) +
+                        facet_wrap(~ origin) +
+                        scale_colour_manual(values = c('#b2df8a','#fb9a99','#fdbf6f'),
+                                            guide = "none") +
+                        labs(x = NULL,
+                             y = 'Cumulative Data',
+                             color = NULL) +
+                        theme_bw(base_size = 12)+
+                        theme(panel.grid.minor = element_blank(),
+                              axis.ticks.y.right = element_blank(),
+                              legend.position = "bottom")),
+          plotly = list( ggplotly(gg, 
+                                  dynamicTicks = TRUE,
+                                  width = 800,
+                                  height = 400,
+                                  tooltip = c("colour","x","y")) %>% 
+                            hide_legend() %>% 
+                            config(displayModeBar = F) ))
+
+gg %>%
+   ungroup() %>% 
+   trelliscope(name = 'Site Enrollement',
+               desc = 'Visualization w/ trelliscope',
+               panel_col = 'plotly',
+               path = './trelliscope',
+               ncol = 1,
+               nrow = 1,
+               height = 900,
+               width  = 600,
+               state = list(sort = list(sort_spec('SITENAME'))))
+```
+
+### Output {background-iframe="mini/trelliscope.html" background-interactive="TRUE"}
+:::
+
+# [reactable](https://glin.github.io/reactable/index.html)![](img/hex_reactablefmtr.png)
+
+#  {background-iframe="mini/reactable.html" background-interactive="TRUE"}
+
+# 
+
+::: panel-tabset
+### Code {.scrollable .smaller}
+
+``` r
+gg <- birth_data %>%
+   ungroup() %>% 
+   group_nest(SITENAME) %>% 
+   rowwise() %>% 
+   mutate(mothers_pc = max(data %>% filter(name == 'M-Pre-Screen Eligible') %>% pull(cumsum) ),
+          mothers_c  = max(data %>% filter(name == 'M-Consented') %>% pull(cumsum) ),
+          babies_c   = max(data %>% filter(name == 'B-Consented') %>% pull(cumsum) ),
+          gg = list( ggplot(data) + 
+                        geom_line(aes(DATE_FLOOR, cumsum, color = name)) +
+                        facet_wrap(~ origin) +
+                        scale_colour_manual(values = c('#b2df8a','#fb9a99','#fdbf6f'),
+                                            guide = "none") +
+                        labs(x = NULL,
+                             y = 'Cumulative Data',
+                             color = NULL) +
+                        theme_bw(base_size = 12)+
+                        theme(panel.grid.minor = element_blank(),
+                              axis.ticks.y.right = element_blank(),
+                              legend.position = "bottom")),
+          plotly = list( ggplotly(gg, 
+                                  dynamicTicks = TRUE,
+                                  width = 800,
+                                  height = 400,
+                                  tooltip = c("colour","x","y")) %>% 
+                            hide_legend() %>% 
+                            config(displayModeBar = F) ))
+
+gg_fig <- gg %>%
+   select(SITENAME, gg, plotly) %>%
+   ungroup()
+
+gg %>% 
+   select(SITENAME, mothers_pc, mothers_c , babies_c ) %>%
+   reactable(.,
+             bordered = TRUE,
+             highlight = TRUE,
+             searchable = FALSE,
+             pagination = FALSE,
+             fullWidth = TRUE,
+             height = 800,
+             columns = list(
+                SITENAME = colDef(filterable = TRUE),
+                mothers_pc = colDef(name = "Mothers"),
+                mothers_c = colDef(name = "Mothers"),
+                babies_c  = colDef(name = "Babies")
+             ),
+             columnGroups = list(
+                colGroup(name = "Pre-Consented", columns = c("mothers_pc")),
+                colGroup(name = "Consented",     columns = c("mothers_c","babies_c"))
+             ),
+             details = function(index) {
+                #htmltools::plotTag(gg_fig$gg[[index]])
+                htmltools::div(style = "padding-left: 80px",
+                               gg_fig$plotly[[index]], 
+                               alt="figure", 
+                               width = 500, height = 250)
+             }
+             
+   ) %>% 
+   reactablefmtr::google_font()
+```
+
+### Output
+
+```{r}
+knitr::include_app("mini/reactable.html", height = "800px")
+```
+:::
+
+# [leaflet](https://rstudio.github.io/leaflet/)
+
+```{r}
+library(leaflet)
+
+leaflet() %>%
+  setView(lng=174.768, lat=-36.852, zoom = 10) %>% 
+  addTiles() %>% 
+  addMarkers(lng=174.768, lat=-36.852,
+             popup="The birthplace of R")
+```
+
+#  {background-iframe="mini/leaflet.html" background-interactive="TRUE"}
+
+# [bsselectR](https://github.com/walkerke/bsselectR)
+
+<blockquote class="twitter-tweet">
+
+<p lang="en" dir="ltr">
+
+fantastic <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc%5Etfw">#rstats</a> bsselectR: Add bootstrap-select dropdown menus to <a href="https://twitter.com/hashtag/rmarkdown?src=hash&amp;ref_src=twsrc%5Etfw">#rmarkdown</a> docs without Shiny <a href="https://twitter.com/kyle_e_walker?ref_src=twsrc%5Etfw">@kyle_e_walker</a><a href="https://t.co/x4iW3rNcBx">https://t.co/x4iW3rNcBx</a> <a href="https://t.co/p0BXfPvGy1">pic.twitter.com/p0BXfPvGy1</a>
+
+</p>
+
+--- Agustin Calatroni (@acalatr) <a href="https://twitter.com/acalatr/status/816727945980964864?ref_src=twsrc%5Etfw">January 4, 2017</a>
+
+</blockquote>
+
+```{=html}
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+```
+#  {background-iframe="mini/bsselectR.html" background-interactive="TRUE"}
+
+# 
+
+::: panel-tabset
+### Code {.scrollable .smaller}
+
+``` r
+for(i in unique(birth_data$SITENAME)){
+   
+   dd <- birth_data %>% 
+      filter(SITENAME == i) %>% 
+      mutate(DATE_FLOOR = DATE_FLOOR %>% as.POSIXct())
+   
+   ax <- dd %>% 
+      group_by(origin, name) %>% 
+      slice(n()) %>% 
+      mutate(color = case_when(name == 'M-Consented'           ~ '#fb9a99',
+                               name == 'M-Pre-Screen Eligible' ~ '#fdbf6f',
+                               name == 'B-Consented'           ~ '#b2df8a'))
+   
+   ggplot(data = dd,
+          aes(x = DATE_FLOOR, y = cumsum, group = name, color = name)) +
+      geom_line(size = 1) +
+      facet_wrap(~ origin) +
+      labs(x = NULL,
+           y = str_glue('Cumulative Numbers ({i})'),
+           color = NULL) +
+      scale_y_continuous(
+         sec.axis = dup_axis(
+            breaks = ax$cumsum,
+            labels = str_glue("<b style='color:{ax$color}'>**{ax$name}** (n={ax$cumsum})</b>"),
+            name = NULL
+         )) +
+      scale_x_datetime(date_breaks = "month", 
+                       labels = label_date_short()) +
+      scale_colour_manual(values = rev(c('#fdbf6f','#fb9a99','#b2df8a')),
+                          guide = 'none')  + 
+      theme_bw() +
+      theme(panel.grid.minor = element_blank(),
+            axis.text.y.right= element_markdown(),
+            axis.ticks.y.right = element_blank())
+   
+   ggsave(str_glue("manual/{i}.png"),
+          plot = last_plot(),
+          scale = 4,
+          width = 750, height = 350, units = 'px')
+}
+
+plots_in        <- str_glue("manual/{unique(birth_data$SITENAME)}.png")
+names(plots_in) <- unique(birth_data$SITENAME)
+bsselect(plots_in, 
+         frame_height = "400px", frame_width = "800px",
+         style        = "btn-primary",
+         box_width    = 'fit',
+         type         = "img", 
+         selected     = "S-01", 
+         live_search  = TRUE, 
+         show_tick    = TRUE)
+```
+
+### Output
+
+```{r}
+knitr::include_app("mini/bsselectR.html", height = "800px")
+```
+:::
+
+# Dashboard
+
+## [flexdashboard](https://pkgs.rstudio.com/flexdashboard/) ![](https://pkgs.rstudio.com/flexdashboard/reference/figures/logo.png){width="1in"}
+
+#  {background-iframe="layout/dashboard_layout.html" background-interactive="TRUE"}
+
+# EXAMPLES
+
+## [Risk factors for in-hospital mortality in laboratory-confirmed COVID-19](https://agstn.github.io/nijman/nijman_tables_flx.html#table-2){.disable-layout}
+
+![](img/risk_covid.png)
+
+## [Continuous Glucose Monitoring (CGM) Visualization](https://agstn.github.io/CGM/)
+
+![](img/CGM-trelliscope.png)
+
+## [Vasculitis Data Visualization](https://agstn.github.io/VAS/)
+
+![](img/vas-fig-gif.gif)
+
+## [Visualize the impact of changing definitions of HiSCR on results](https://rpubs.com/acalatroni/899939)
+
+![](img/HiSCR_response.png)
+
+## [dataxray CDISCPILOT01 ADSL data](https://rpubs.com/acalatroni/863850)
+
+![](img/ADSL_dataxray.png)
+
+# Clinical Trial Report
+
+#  {background-iframe="dashboard/SARS/SARS_dashboard.html" background-interactive="TRUE"}
+
+#  {background-iframe="dashboard/Questionnaire/Questionnaire_dashboard.html#mothers" background-interactive="TRUE"}
+
+# Thank You
+
+[Slides](https://agstn.github.io/UseR2022_dashboards/){preview-link="false"}
+
+[Github](https://github.com/agstn/UseR2022_dashboards){preview-link="false"}
+
+

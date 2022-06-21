@@ -1,0 +1,94 @@
+---
+title: "&nbsp;"
+output:
+  html_document:
+    self_contained: yes
+---
+
+```{=html}
+<style>
+element.style {
+width:         1200px;
+height:        900px;
+margin-top:    25px;
+margin-bottom: 25px;
+}
+</style>
+```
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      eval = TRUE, 
+                      warning = FALSE, 
+                      comment = NA, 
+                      cache = FALSE)
+```
+
+```{r}
+pacman::p_load(tidyverse)
+pacman::p_load(scales, ggtext)
+pacman::p_load(trelliscopejs)
+```
+
+```{r}
+birth_data <- readRDS('dat/birth_data.rds')
+```
+
+```{r}
+for(i in unique(birth_data$SITENAME)){
+   
+   dd <- birth_data %>% 
+      filter(SITENAME == i) %>% 
+      mutate(DATE_FLOOR = DATE_FLOOR %>% as.POSIXct())
+   
+   ax <- dd %>% 
+      group_by(origin, name) %>% 
+      slice(n()) %>% 
+      mutate(color = case_when(name == 'M-Consented'           ~ '#fb9a99',
+                               name == 'M-Pre-Screen Eligible' ~ '#fdbf6f',
+                               name == 'B-Consented'           ~ '#b2df8a'))
+   
+   ggplot(data = dd,
+          aes(x = DATE_FLOOR, y = cumsum, group = name, color = name)) +
+      geom_line(size = 1) +
+      facet_wrap(~ origin) +
+      labs(x = NULL,
+           y = str_glue('Cumulative Numbers ({i})'),
+           color = NULL) +
+      scale_y_continuous(
+         sec.axis = dup_axis(
+            breaks = ax$cumsum,
+            labels = str_glue("<b style='color:{ax$color}'>**{ax$name}** (n={ax$cumsum})</b>"),
+            name = NULL
+         )) +
+      scale_x_datetime(date_breaks = "month", 
+                       labels = label_date_short()) +
+      scale_colour_manual(values = rev(c('#fdbf6f','#fb9a99','#b2df8a')),
+                          guide = 'none')  + 
+      theme_bw() +
+      theme(panel.grid.minor = element_blank(),
+            axis.text.y.right= element_markdown(),
+            axis.ticks.y.right = element_blank())
+   
+   ggsave(str_glue("bsselectR/{i}.png"),
+          plot = last_plot(),
+          scale = 4,
+          width = 750, height = 350, units = 'px')
+}
+```
+
+```{r}
+#devtools::install_github("walkerke/bsselectR")
+library(bsselectR)
+plots_in        <- str_glue("bsselectR/{unique(birth_data$SITENAME)}.png")
+names(plots_in) <- unique(birth_data$SITENAME)
+bsselect(plots_in, 
+         frame_height = "400px", frame_width = "800px",
+         style        = "btn-primary",
+         box_width    = 'fit',
+         type         = "img", 
+         selected     = "S-01", 
+         live_search  = TRUE, 
+         show_tick    = TRUE)
+```
+```

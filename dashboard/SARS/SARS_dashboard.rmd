@@ -1,0 +1,244 @@
+---
+title: "SARS Dashboard"
+date:  "`r format(Sys.time(),format='%A %d %b %Y  %I:%M %p %Z')`"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    self_contained: true
+    source_code: embed
+---
+
+```{=html}
+<style>
+.navbar-inverse {
+background-color: rgba(33, 87, 138, 1);
+border-color: rgba(33, 87, 138, 1);
+}
+
+.image-container {
+background-position: center top !important;
+}
+
+div#total-randomizations div.chart-stage div svg text tspan {
+fill: #707070;
+}
+
+div#total-randomizations div.chart-stage div svg text:nth-of-type(2) tspan {
+fill: #707070;
+}   
+
+div#high-allergy-randomizations div.chart-stage div svg text tspan {
+fill: #707070;
+}
+
+div#high-allergy-randomizations div.chart-stage div svg text:nth-of-type(2) tspan {
+fill: #707070;
+}  
+
+div#comparison-randomizations div.chart-stage div svg text tspan {
+fill: #707070;
+}
+
+div#Comparison-randomizations div.chart-stage div svg text:nth-of-type(2) tspan {
+fill: #707070;
+} 
+</style>
+```
+```{r setup, include=FALSE}
+library(flexdashboard) 
+library(tidyverse)
+library(haven)
+library(lubridate)
+library(gtsummary)
+library(gt)
+library(plotly)
+library(crosstalk) 
+library(readxl) 
+
+library(sparkline)
+library(reactable)
+library(htmltools)
+library(reactablefmtr)
+```
+
+```{r}
+d_c            <- rio::import('dat/d_c.rds')
+d_site_cumul   <- rio::import('dat/d_site_cumul.rds')
+```
+
+## Column {data-width="150"}
+
+### Total Randomizations {.no-title}
+
+```{r }
+flexdashboard::gauge(value = 20.2, 
+                     min = 0, 
+                     max = 100, 
+                     symbol = '%', 
+                     sectors = gaugeSectors(success = c(80, 100), warning = c(40, 79), danger = c(0, 39)),
+                     label = "Randomized")
+```
+
+### High Allergy Randomizations {.no-title}
+
+```{r}
+flexdashboard::gauge(value = 18.8, 
+                     min = 0, 
+                     max = 100, 
+                     symbol = '%', 
+                     sectors = gaugeSectors(success = c(80, 100), warning = c(40, 79), danger = c(0, 39)),
+                     label = "High Allergy")
+```
+
+### Comparison Randomizations {.no-title}
+
+```{r}
+flexdashboard::gauge(value = 22.3, 
+                     min = 0, 
+                     max = 100, 
+                     symbol = '%', 
+                     sectors = gaugeSectors(success = c(80, 100), warning = c(40, 79), danger = c(0, 39)),
+                     label = "Comparison")
+```
+
+### Female {.value-box}
+
+```{r}
+valueBox('66.7%',
+         icon = "fa-user",
+         color = "#66C2A5")
+```
+
+## Column {.tabset data-width="400"}
+
+### Figure: Overall
+
+```{r fig.width=6, fig.height=4.5}
+d_site_cumul %>%  
+   filter(site=="00000") %>%
+   mutate(randdt = randdt %>% as.POSIXct()) %>% 
+   ggplot(., aes(x=randdt, y = n_tot)) +
+   geom_line() +
+   theme_bw(base_size=14) +
+   scale_y_continuous(breaks = seq(0, 750,50), limits = c(0, 750)) +
+   scale_x_datetime(date_breaks = "month", 
+                    labels = scales::label_date_short()) +
+   labs(y = "# of Randomizations",
+        x = "") +
+   theme(panel.grid.minor = element_blank())
+```
+
+### Figure: By Site
+
+```{r }
+
+enrl_dat_bysite <- SharedData$new(d_site_cumul %>% 
+                                     filter(!site=="00000") %>% 
+                                     mutate(randdt = randdt %>% as.POSIXct())
+)
+
+manipulateWidget::combineWidgets(
+   nrow = 2,
+   rowsize = c(0.1, 0.9),
+   width="400px",
+   crosstalk::filter_select("site","Site", enrl_dat_bysite, ~site),
+   ggplotly(
+      enrl_dat_bysite %>%   
+         ggplot(., aes(x=randdt, y = n_tot, group=site, text = paste0("Site ", site, "<br>",
+                                                                      "N = ", n_tot, " as of ", format(randdt, "%m/%d")))) +
+         geom_line() +
+         theme_bw() +
+         scale_y_continuous(breaks = seq(0, 100,10), limits = c(0, 100)) +
+         scale_x_datetime(date_breaks = "month", 
+                          labels = scales::label_date_short()) +
+         theme(
+            panel.grid.minor = element_blank()
+         ) +
+         labs(y = "# of Randomizations",
+              x = ""), 
+      tooltip = "text",
+      width = 600,
+      height = 500) %>% 
+      hide_legend()  %>%
+      config(displayModeBar = FALSE)
+)
+
+
+```
+
+## Column {data-width="400"}
+
+### Table: Overall
+
+```{r}
+dc <- d_c %>% 
+   group_nest(site, site_activation_date, n_rand, rand_over_time, n_started_trt, pct_started_trt,
+              .key = 'data_sparkline')
+
+blue_pal  <- function(x) rgb(colorRamp(c("white", "#80B1D3"))(x), maxColorValue = 255)
+green_pal <- function(x) rgb(colorRamp(c("white", "#7FC97F"))(x), maxColorValue = 255)
+
+bar_style <- function(width = 1, fill = "#e6e6e6", height = "75%", align = c("left", "right"), color = NULL) {
+   align <- match.arg(align)
+   if (align == "left") {
+      position <- paste0(width * 100, "%")
+      image <- sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", fill, position)
+   } else {
+      position <- paste0(100 - width * 100, "%")
+      image <- sprintf("linear-gradient(90deg, transparent %1$s, %2$s %1$s)", position, fill)
+   }
+   list(
+      backgroundImage = image,
+      backgroundSize = paste("100%", height),
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center",
+      color = color
+   )
+}
+
+reactable(
+   dc, 
+   defaultColDef = colDef(align = "center"),
+   columns = list(
+      site = colDef(name = "Site",
+                    align = "left",
+                    minWidth = 65, 
+                    style = function(value){
+                       list(position = "sticky", background = "#fff", zIndex = 1, 
+                            left = 0, borderRight = "1px solid #eee",
+                            fontWeight = "bold")},
+                    headerStyle = list(postion = "sticky", right = 0, borderLeft = "1px solid #eee")
+      ),
+      site_activation_date = colDef(name = "Activation",
+                                    width = 100),
+      
+      n_rand = colDef(name = "Randomizations-n",
+                      width = 130,
+                      cell = data_bars(dc) ),
+      
+      n_started_trt = colDef(name = "Started",
+                             width = 75,
+                             align = "left"),
+      pct_started_trt = colDef(show = FALSE), 
+      data_sparkline = colDef(show = FALSE),
+      rand_over_time = colDef(
+         name = "Randomizations",
+         minWidth = 175,
+         cell = function(value, index){
+            sparkline(dc$data_sparkline[[index]]$n_cumul, 
+                      width = 175,
+                      minSpotColor=FALSE, maxSpotColor=FALSE,
+                      lineColor = "#1F78B4", fillColor = "#A6CEE3", lineWidth=1.4,
+                      highlightSpotColor = "#FC8D62",
+                      highlightLineColor = "#FC8D62")
+         })
+   ),
+   fullWidth = TRUE,
+   resizable = TRUE,
+   compact = TRUE,
+   searchable = TRUE,
+   pagination = FALSE,
+   style = list(fontSize = 14)
+)
+```

@@ -1,0 +1,158 @@
+---
+title: "Questionnaire Dashboard"
+date:  "`r format(Sys.time(),format='%A %d %b %Y  %I:%M %p %Z')`"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    self_contained: true
+    source_code: embed
+    theme: default
+    logo: ../../img/userlogo-small.png
+---
+
+```{=html}
+<style collection="text/css">
+.image-container {
+background-position: center top !important;}
+</style>
+```
+
+```{r setup-main, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(echo = FALSE, 
+                      eval = TRUE,
+                      warning = FALSE, 
+                      message = FALSE, 
+                      comment = NA, 
+                      cache = FALSE)
+
+# Load libraries
+pacman::p_load(flexdashboard, fontawesome)
+pacman::p_load(tidyverse, rio, labelled, lubridate)
+pacman::p_load(crosstalk, reactable, reactablefmtr)
+```
+
+<!-- PAGE -->
+
+# Consented {data-icon="fa-file-signature"}
+
+<!-- 1st Column -->
+
+## \#\# Column {data-width="200"}
+
+### Mothers Pre-Screened
+
+```{r}
+valueBox(999, color = '#bfbfbf', caption = 'Mothers Pre-Screened', icon = "fa-users")
+```
+
+### Mothers Pre-Screen Eligible
+
+```{r}
+valueBox(888, color = '#fdbf6f', caption = 'Pre-Screen Eligible (Consented/Scheduled/Pending)', icon = "fa-user-friends")
+```
+
+### Mothers Consented
+
+```{r}
+valueBox(777, color = '#fb9a99', caption = 'Mothers Consented', icon = "fa-female")
+```
+
+### Mothers Terminated
+
+```{r}
+valueBox(6, color = '#fa8280', caption = 'Mothers Terminated', icon = "fa-user-times")
+```
+
+### Fathers Consented
+
+```{r}
+valueBox(555, color = '#a6cee3', caption = 'Fathers Consented', icon = "fa-male")
+```
+
+### Babies Born
+
+```{r}
+valueBox(444, color = '#b2df8a', caption = 'Babies Born', icon = "fa-child")
+```
+
+<!-- 2nd Column -->
+
+## \#\# Column {.tabset}
+
+### Consented (Figure)
+
+
+```{r}
+
+```
+
+
+### Consented by **Site** (Figure)
+
+```{r}
+
+```
+
+### Consented (Table)  {data-height="800"}
+
+```{r}
+
+```
+
+### Reason(s) for ineligibility
+
+```{r}
+
+```
+
+### Visits
+
+```{r}
+
+```
+
+### Demographics  {data-height="800"}
+
+```{r}
+
+```
+
+<!-- PAGE -->
+
+# Mothers {data-navmenu="Questionnaire Status" data-icon="fa-female" data-orientation="columns"}
+
+## Inputs {.sidebar}
+
+```{r}
+ dd <- import('dat/dat_m.rds')
+
+dd_c <- import('dat/dat_m.rds') %>% 
+   SharedData$new()
+
+filter_select("SITENAME", "SITENAME", dd_c, ~SITENAME, multiple = FALSE)
+filter_select("VISIT", "VISIT", dd_c, ~VISIT)
+filter_select("FORMS", "FORMS", dd_c, ~COLLECTION)
+filter_slider("MISSING", "% MISSING", dd_c, ~pct_miss, width = "80%", step = 1, ticks = FALSE)
+```
+
+## Column
+
+```{r}
+source('scr/create_reactable.r')
+create_reactable(shared_data = dd_c, data = dd, collection = "Forms", total_footer = TRUE)
+```
+
+
+# Fathers {data-navmenu="Questionnaire Status" data-icon="fa-male" data-orientation="columns"}
+
+```{r}
+
+```
+
+# Children {data-navmenu="Questionnaire Status" data-icon="fa-child" data-orientation="columns"}
+
+```{r}
+
+```

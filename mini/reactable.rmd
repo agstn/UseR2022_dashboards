@@ -1,0 +1,98 @@
+---
+title: "&nbsp;" 
+output:
+  html_document:
+    self_contained: yes
+---
+
+```{=html}
+<style>
+element.style {
+width:         1200px;
+height:        6000px;
+margin-top:    25px;
+margin-bottom: 25px;
+}
+</style>
+```
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      eval = TRUE, 
+                      warning = FALSE, 
+                      comment = NA, 
+                      cache = FALSE)
+```
+
+```{r}
+pacman::p_load(tidyverse)
+pacman::p_load(reactable)
+pacman::p_load(plotly)
+```
+
+```{r}
+birth_data <- readRDS('dat/birth_data.rds')
+```
+
+```{r}
+gg <- birth_data %>%
+   ungroup() %>% 
+   group_nest(SITENAME) %>% 
+   rowwise() %>% 
+   mutate(mothers_pc = max(data %>% filter(name == 'M-Pre-Screen Eligible') %>% pull(cumsum) ),
+          mothers_c  = max(data %>% filter(name == 'M-Consented') %>% pull(cumsum) ),
+          babies_c   = max(data %>% filter(name == 'B-Consented') %>% pull(cumsum) ),
+          gg = list( ggplot(data) + 
+                        geom_line(aes(DATE_FLOOR, cumsum, color = name)) +
+                        facet_wrap(~ origin) +
+                        scale_colour_manual(values = c('#b2df8a','#fb9a99','#fdbf6f'),
+                                            guide = "none") +
+                        labs(x = NULL,
+                             y = 'Cumulative Data',
+                             color = NULL) +
+                        theme_bw(base_size = 12)+
+                        theme(panel.grid.minor = element_blank(),
+                              axis.ticks.y.right = element_blank(),
+                              legend.position = "bottom")),
+          plotly = list( ggplotly(gg, 
+                                  dynamicTicks = TRUE,
+                                  width = 800,
+                                  height = 400,
+                                  tooltip = c("colour","x","y")) %>% 
+                            hide_legend() %>% 
+                            config(displayModeBar = F) ))
+
+gg_fig <- gg %>%
+   select(SITENAME, gg, plotly) %>%
+   ungroup()
+
+gg %>% 
+   select(SITENAME, mothers_pc, mothers_c , babies_c ) %>%
+   reactable(.,
+             bordered = TRUE,
+             highlight = TRUE,
+             searchable = FALSE,
+             pagination = FALSE,
+             fullWidth = TRUE,
+             height = 800,
+             columns = list(
+                SITENAME = colDef(filterable = TRUE),
+                mothers_pc = colDef(name = "Mothers"),
+                mothers_c = colDef(name = "Mothers"),
+                babies_c  = colDef(name = "Babies")
+             ),
+             columnGroups = list(
+                colGroup(name = "Pre-Consented", columns = c("mothers_pc")),
+                colGroup(name = "Consented",     columns = c("mothers_c","babies_c"))
+             ),
+             details = function(index) {
+                #htmltools::plotTag(gg_fig$gg[[index]])
+                htmltools::div(style = "padding-left: 80px",
+                               gg_fig$plotly[[index]], 
+                               alt="figure", 
+                               width = 500, height = 250)
+             }
+             
+   ) %>% 
+   reactablefmtr::google_font()
+```

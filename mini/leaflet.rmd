@@ -1,0 +1,71 @@
+---
+title: "Fiji earthquakes" 
+output: 
+   flexdashboard::flex_dashboard:
+      orientation: rows
+      source_code: embed
+---
+
+```{r setup, include=FALSE}
+library(crosstalk)
+library(leaflet)
+library(DT)
+library(plotly)
+
+sd <- SharedData$new(quakes)
+```
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+filter_slider("mag", "Magnitude", sd, column=~mag,   step=0.1)
+filter_slider("mag", "Depth",     sd, column=~depth, step=50)
+```
+
+---
+
+Row {data-height=500}
+-------------------------------------
+
+### LEAFLET
+
+```{r}
+leaflet(sd) %>%
+   setView(170, -20, zoom = 4 ) %>% 
+   addProviderTiles("Esri.WorldImagery") %>% 
+   addTiles() %>% 
+   addCircleMarkers(
+      radius = 4,
+      stroke = FALSE, fillOpacity = 0.5
+   )
+```
+
+Row {data-height=500}
+-------------------------------------
+
+### GGPLOTLY
+
+```{r}
+ggplotly(
+   ggplot(data = sd,
+          aes(x = depth , y = mag ,  label = stations))+
+      geom_point() +
+      labs(x = 'Depth',
+           y = 'Magnitude') +
+      theme_bw() 
+) 
+```
+
+### DT
+
+```{r}
+datatable(sd, 
+          rownames = FALSE, 
+          extensions = 'Scroller',
+          options = list(scrollY = 200, 
+                         scroller = TRUE, 
+                         columnDefs = list(list(className = 'dt-left', 
+                                                targets = 0:3))
+          )
+)
+```

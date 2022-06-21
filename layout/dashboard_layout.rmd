@@ -1,0 +1,264 @@
+---
+title: "Dashboard Layout"
+date:  "`r format(Sys.time(),format='%A %d %b %Y')`" 
+output: 
+   flexdashboard::flex_dashboard:
+    vertical_layout: fill
+    # vertical_layout: scroll
+    self_contained: true
+    theme: default
+    logo: ../img/userlogo-small.png
+    source_code: embed
+    navbar:
+      - { title: "About", href: "https://pkgs.rstudio.com/flexdashboard/index.html", align: right }
+---
+
+```{css my-content, echo = FALSE}
+
+.storyboard-nav {
+    box-sizing: border-box;
+    width: 100% !important; /* This prevents JS transformation on width */
+    height: auto; /* This overrides the height */
+}
+
+.storyboard-nav .sbnext, .storyboard-nav .sbprev {
+    height: auto; /* This overrides the height */
+    font-size: 3rem;
+}
+
+.storyboard-nav .sbframelist {
+    height: auto; /* This overrides the height */
+}
+
+.storyboard-nav .sbframelist ul {
+    box-sizing: border-box;
+    width: 100% !important; /* This prevents JS transformation on width */
+    height: auto; /* This overrides the height */
+}
+
+.storyboard-nav .sbframelist ul li {
+    height: auto; /* This overrides the height */
+    width: auto; /* This overrides the width */
+}
+
+```
+
+```{r setup-main, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(echo = FALSE, 
+                      eval = TRUE,
+                      warning = FALSE, 
+                      message = FALSE, 
+                      comment = NA, 
+                      cache = FALSE)
+
+# Load libraries
+pacman::p_load(flexdashboard, fontawesome)
+pacman::p_load(tidyverse, rio, labelled, lubridate)
+pacman::p_load(crosstalk, reactable, reactablefmtr)
+```
+
+Page 1 {data-orientation=rows data-icon="fa-list"}
+===================================== 
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### Row 1 | Tab 1
+
+### Row 1 | Tab 2
+
+Row
+-------------------------------------
+
+### Row 2 Column 1
+
+### Row 2 Column 2
+
+Page 2 {data-orientation=columns data-icon="fa-hashtag"}
+===================================== 
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Column 1
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Column 2 Row 1
+
+### Column 2 Row 2
+
+
+Page 3 {data-orientation=rows}
+===================================== 
+
+Sidebar {.sidebar}
+-------------------------------------
+
+Value Boxes {data-width=200}
+-------------------------------------
+
+### Primary
+
+```{r}
+valueBox(1, caption = "primary", icon = "fa-github")
+```
+
+### Info
+
+```{r}
+valueBox(2, caption = "info", color = "info", icon = "fa-twitter")
+```
+
+### Success
+
+```{r}
+valueBox(3, caption = "success", color = "success", icon = "glyphicon-time")
+```
+
+### Warning
+
+```{r}
+valueBox(4, caption = "warning", color = "warning", icon = "fa-facebook")
+```
+
+### Danger
+
+```{r}
+valueBox(5, caption = "danger", color = "danger", icon = "fa-facebook")
+```
+
+### Custom
+
+```{r}
+valueBox(
+  6, caption = "custom", color = "lightgray",
+  icon = "fab fa-r-project"
+)
+```
+
+Row 1 {data-width=200}
+-------------------------------------
+
+### Column 1
+
+### Column 2
+
+### Column 3
+
+
+Row 2 {.tabset}
+-------------------------------------
+
+### Row 2 Column 1 | Tab 1
+
+### Row 2 Column 1 | Tab 2
+
+
+Page 4 {.storyboard}
+=========================================
+
+### Tile 1
+*** 
+Text
+
+
+### Tile 2
+*** 
+Text
+
+### Tile 3
+
+
+
+Page 5 {data-orientation=rows}
+=====================================     
+   
+
+Row {data-height=300}
+-------------------------------------
+
+### Row 1 Column 1
+
+
+### Row 1 Column 2
+
+
+Row
+-------------------------------------
+   
+### Row 2 Column 1 {.bg-primary}
+
+### Row 2 Column 2 {.bg-secondary}
+
+
+
+<!-- Page 6 {.no-title data-orientation=rows} -->
+<!-- =====================================   -->
+
+# Section 1 {data-navmenu="Page 6"}
+
+# Section 2 {data-navmenu="Page 6"}
+
+# Section 3 {data-navmenu="Page 6"}
+
+
+Page 7 {data-orientation=rows}
+=======================================================================
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+
+### Gauge 1 {.value-box}
+```{r}
+gauge(8, min = 0, max = 10, 
+      gaugeSectors(success = c(0, 2), warning = c(3, 6), danger = c(7, 10))
+      )
+```
+
+### Gauge 2 {.value-box}
+```{r}
+gauge(25, min = 0, max = 50, 
+      gaugeSectors(
+  success = c(41, 50), warning = c(21, 40), danger = c(0, 20))
+  )
+```
+
+### Gauge 3 {.value-box}
+```{r}
+gauge(2, min = 0, max = 10, 
+      gaugeSectors(success = c(0, 2), warning = c(3, 6), danger = c(7, 10))
+      )
+```
+
+Row {data-height=800}
+-----------------------------------------------------------------------
+
+### Column 1 {data-width=700}
+
+
+### Column 2 {data-width=340}
+
+
+Page 8 {.hidden}
+=======================================================================
+
+
+Storyboard (CSS) {.storyboard}
+=========================================
+
+### Frame 1
+
+```{r}
+```
+
+### Frame 2
+
+```{r}
+```
+
