@@ -456,7 +456,7 @@ knitr::include_app("mini/bsselectR.html", height = "800px")
 
 # Thank You
 
-[Slides](https://agstn.github.io/UseR2022_dashboards/){preview-link="false"}
+[Slides](https://agstn.github.io/UseR2022_dashboards/UseR2022_dashboards.html){preview-link="false"}
 
 [Github](https://github.com/agstn/UseR2022_dashboards){preview-link="false"}
 
