@@ -38,10 +38,11 @@ Speaker notes go here
 
 #  {background-iframe="mini/plotly.html" background-interactive="TRUE"}
 
-# 
+# {.scrollable .smaller}
 
 ::: panel-tabset
-### Code {.scrollable .smaller}
+
+### Code 
 
 ``` r
 pacman::p_load(tidyverse)
@@ -89,10 +90,11 @@ knitr::include_app("mini/plotly.html", height = "800px")
 
 #  {background-iframe="mini/echarts4r.html" background-interactive="TRUE"}
 
-# 
+# {.scrollable .smaller}
 
 ::: panel-tabset
-### Code {.scrollable .smaller}
+
+### Code 
 
 ``` r
 m_data <- birth_data %>% 
@@ -194,12 +196,19 @@ Goodness, the things <a href="https://twitter.com/rdatasculptor?ref_src=twsrc%5E
 ```
 #  {background-iframe="mini/trelliscope.html" background-interactive="TRUE"}
 
-# 
+# {.scrollable .smaller}
 
 ::: panel-tabset
-### Code {.scrollable .smaller}
+
+### Code
 
 ``` r
+pacman::p_load(tidyverse)
+pacman::p_load(trelliscopejs)
+pacman::p_load(plotly)
+
+birth_data <- readRDS('dat/birth_data.rds')
+
 gg <- birth_data %>%
    ungroup() %>% 
    group_nest(SITENAME) %>% 
@@ -239,19 +248,27 @@ gg %>%
                state = list(sort = list(sort_spec('SITENAME'))))
 ```
 
-### Output {background-iframe="mini/trelliscope.html" background-interactive="TRUE"}
+### Output
+
 :::
 
 # [reactable](https://glin.github.io/reactable/index.html)![](img/hex_reactablefmtr.png)
 
 #  {background-iframe="mini/reactable.html" background-interactive="TRUE"}
 
-# 
+# {.scrollable .smaller}
 
 ::: panel-tabset
-### Code {.scrollable .smaller}
+
+### Code
 
 ``` r
+pacman::p_load(tidyverse)
+pacman::p_load(reactable)
+pacman::p_load(plotly)
+
+birth_data <- readRDS('dat/birth_data.rds')
+
 gg <- birth_data %>%
    ungroup() %>% 
    group_nest(SITENAME) %>% 
@@ -333,9 +350,9 @@ leaflet() %>%
              popup="The birthplace of R")
 ```
 
-#  {background-iframe="mini/leaflet.html" background-interactive="TRUE"}
+# {background-iframe="mini/leaflet.html" background-interactive="TRUE"}
 
-# [bsselectR](https://github.com/walkerke/bsselectR)
+# [bsselectR](https://github.com/walkerke/bsselectR){preview-link="false"}
 
 <blockquote class="twitter-tweet">
 
@@ -354,12 +371,19 @@ fantastic <a href="https://twitter.com/hashtag/rstats?src=hash&amp;ref_src=twsrc
 ```
 #  {background-iframe="mini/bsselectR.html" background-interactive="TRUE"}
 
-# 
+#  {.scrollable .smaller}
 
 ::: panel-tabset
-### Code {.scrollable .smaller}
+
+### Code
 
 ``` r
+pacman::p_load(tidyverse)
+pacman::p_load(scales, ggtext)
+pacman::p_load(trelliscopejs)
+
+birth_data <- readRDS('dat/birth_data.rds')
+
 for(i in unique(birth_data$SITENAME)){
    
    dd <- birth_data %>% 
@@ -395,13 +419,15 @@ for(i in unique(birth_data$SITENAME)){
             axis.text.y.right= element_markdown(),
             axis.ticks.y.right = element_blank())
    
-   ggsave(str_glue("manual/{i}.png"),
+   ggsave(str_glue("bsselectR/{i}.png"),
           plot = last_plot(),
           scale = 4,
           width = 750, height = 350, units = 'px')
 }
 
-plots_in        <- str_glue("manual/{unique(birth_data$SITENAME)}.png")
+#devtools::install_github("walkerke/bsselectR")
+library(bsselectR)
+plots_in        <- str_glue("bsselectR/{unique(birth_data$SITENAME)}.png")
 names(plots_in) <- unique(birth_data$SITENAME)
 bsselect(plots_in, 
          frame_height = "400px", frame_width = "800px",
@@ -448,14 +474,18 @@ knitr::include_app("mini/bsselectR.html", height = "800px")
 
 # Clinical Trial Report
 
-#  {background-iframe="dashboard/SARS/SARS_dashboard.html" background-interactive="TRUE"}
+# {background-iframe="dashboard/SARS/SARS_dashboard.html" background-interactive="TRUE"}
 
-#  {background-iframe="dashboard/Questionnaire/Questionnaire_dashboard.html#mothers" background-interactive="TRUE"}
+# {background-iframe="dashboard/Questionnaire/Questionnaire_dashboard.html#mothers" background-interactive="TRUE"}
 
 # Thank You
 
 [Slides](https://agstn.github.io/UseR2022_dashboards/UseR2022_dashboards.html){preview-link="false"}
 
 [Github](https://github.com/agstn/UseR2022_dashboards){preview-link="false"}
+
+::: footer
+github.com/agstn/UseR2022_dashboards
+:::
 
 
