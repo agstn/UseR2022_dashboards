@@ -19,7 +19,7 @@ format:
 ### Abstract
 
 > ::: {style="line-height: normal; font-size: 28px"}
-> RStudio's [`flexdashboard`](https://pkgs.rstudio.com/flexdashboard/) package is a powerful tool to create interactive dashboards in R using R Markdown. A variety of layouts can be quickly generated including multiple pages, storyboards, and commentaries, as well as embedded tabs and drop-down menus. Additionally, with minimal programming effort, the dashboards can be customized via pre-packaged themes or custom CSS. Dashboards can be further extended for user interactivity with tables and visualizations by judicious use of HTML widgets to create a standalone HTML file with no special client or server requirement. In this talk, we will present a workflow utilizing flexdashboard and leveraging the abilities of other individual packages, such as `trelliscopejs`, `plotly`, `DT`, `reactable`, `leaflet`, `crosstalk`, to create highly interactive clinical trial reports for data monitoring and/or statistical analyses results. By avoiding the use of shiny, these reports can be conveniently emailed, deployed on an internal company webpage, or added to GitHub pages for widespread accessibility. Demonstrations of dashboards will include those listed below as well as additional examples that have been developed for current clinical trials monitoring.
+> RStudio's [`flexdashboard`](https://pkgs.rstudio.com/flexdashboard/) package is a powerful tool to create interactive <span class="fragment highlight-red" fragment-index=2>dashboards</span> in R using R Markdown. A variety of layouts can be quickly generated including multiple pages, storyboards, and commentaries, as well as embedded tabs and drop-down menus. Additionally, with minimal programming effort, the dashboards can be customized via pre-packaged themes or custom CSS. Dashboards can be further extended for user <span class="fragment highlight-red" fragment-index=1>interactivity</span> with tables and visualizations by judicious use of HTML widgets to create a standalone HTML file with no special client or server requirement. In this talk, we will present a workflow utilizing flexdashboard and leveraging the abilities of other individual packages, such as `trelliscopejs`, `plotly`, `DT`, `reactable`, `leaflet`, `crosstalk`, to create highly interactive clinical trial reports for data monitoring and/or statistical analyses results. By avoiding the use of shiny, these reports can be conveniently emailed, deployed on an internal company webpage, or added to GitHub pages for widespread accessibility. <span class="fragment highlight-red" fragment-index=3>Demonstrations</span> of dashboards will include those listed below as well as additional examples that have been developed for current clinical trials monitoring.
 > :::
 
 <!-- <a href = 'https://github.com/agstn' target = '_blank'><i class = 'fab fa-github'></i>  </a> -->
@@ -438,15 +438,13 @@ knitr::include_app("mini/bsselectR.html", height = "800px")
 
 ## [Vasculitis Data Visualization](https://agstn.github.io/VAS/)
 
-![](img/vas-fig-gif.gif)
+![](img/vas-fig.png)
 
-## [Visualize the impact of changing definitions of HiSCR on results](https://rpubs.com/acalatroni/899939)
+<!-- ## [Visualize the impact of changing definitions of HiSCR on results](https://rpubs.com/acalatroni/899939){preview-link="false"} -->
+<!-- ![](img/HiSCR_response.png) -->
 
-![](img/HiSCR_response.png)
-
-## [dataxray CDISCPILOT01 ADSL data](https://rpubs.com/acalatroni/863850)
-
-![](img/ADSL_dataxray.png)
+<!-- ## [dataxray CDISCPILOT01 ADSL data](https://rpubs.com/acalatroni/863850){preview-link="false"} -->
+<!-- ![](img/ADSL_dataxray.png) -->
 
 # Clinical Trial Report
 
